@@ -49,11 +49,11 @@ jobs:
       - name: Build Docker image
         run: |
           docker build -t my-app:${{ github.sha }} .
-          docker tag my-app:${{ github.sha }} 744988023230.dkr.ecr.us-east-1.amazonaws.com/${{ secrets.ECR_REPOSITORY_NAME }}:${{ github.sha }}
+          docker tag my-app:${{ github.sha }} 082080151609.dkr.ecr.us-east-1.amazonaws.com/tutorial-ci-cd/${{ secrets.ECR_REPOSITORY_NAME }}:${{ github.sha }}
 
       - name: Push to Amazon ECR
         run: |
-          docker push 744988023230.dkr.ecr.us-east-1.amazonaws.com/${{ secrets.ECR_REPOSITORY_NAME }}:${{ github.sha }}
+          docker push 082080151609.dkr.ecr.us-east-1.amazonaws.com/tutorial-ci-cd/${{ secrets.ECR_REPOSITORY_NAME }}:${{ github.sha }}
 
   deploy:
     needs: docker
