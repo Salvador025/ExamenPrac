@@ -44,7 +44,7 @@ jobs:
 
       - name: Log in to Amazon ECR
         run: |
-          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 744988023230.dkr.ecr.us-east-1.amazonaws.com
+          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 082080151609.dkr.ecr.us-east-1.amazonaws.com/tutorial-ci-cd
 
       - name: Build Docker image
         run: |
@@ -74,10 +74,10 @@ jobs:
             export AWS_SESSION_TOKEN=${{ secrets.AWS_SESSION_TOKEN }}
 
             # Autenticación con ECR
-            aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 744988023230.dkr.ecr.us-east-1.amazonaws.com
+            aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 082080151609.dkr.ecr.us-east-1.amazonaws.com/tutorial-ci-cd
 
             # Descargar y correr el contenedor
-            docker pull 744988023230.dkr.ecr.us-east-1.amazonaws.com/${{ secrets.ECR_REPOSITORY_NAME }}:${{ github.sha }}
+            docker pull 082080151609.dkr.ecr.us-east-1.amazonaws.com/tutorial-ci-cd/${{ secrets.ECR_REPOSITORY_NAME }}:${{ github.sha }}
             docker stop my-app || true
             docker rm my-app || true
-            docker run -d --name my-app -p 80:80 744988023230.dkr.ecr.us-east-1.amazonaws.com/${{ secrets.ECR_REPOSITORY_NAME }}:${{ github.sha }}
+            docker run -d --name my-app -p 80:80 082080151609.dkr.ecr.us-east-1.amazonaws.com/tutorial-ci-cd/${{ secrets.ECR_REPOSITORY_NAME }}:${{ github.sha }}
