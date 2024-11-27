@@ -1,0 +1,121 @@
+GET http://localhost:3000/clientes
+
+###
+
+GET http://localhost:3000/clientes/1
+
+###
+POST http://localhost:3000/clientes
+Content-Type: application/json
+
+{
+  "id": "1",
+  "razonSocial": "Empresa X",
+  "nombreComercial": "Comercial X",
+  "email": "contacto@empresax.com"
+}
+
+###
+PUT http://44.202.217.97:3000/clientes/1
+Content-Type: application/json
+
+{
+  "razonSocial": "Empresa X Modificado",
+  "nombreComercial": "Comercial X Modificado",
+  "email": "nuevocontacto@empresax.com"
+}
+
+###
+DELETE http://44.202.217.97:3000/clientes/3
+
+
+###
+GET http://44.202.217.97:3000/direcciones
+
+###
+GET http://44.202.217.97:3000/direcciones/4
+
+###
+POST http://44.202.217.97:3000/direcciones
+Content-Type: application/json
+
+{
+  "id": 1,
+  "domicilio": "Calle Falsa 123",
+  "colonia": "Centro",
+  "municipio": "Ciudad X",
+  "estado": "Estado Y",
+  "tipoDireccion": "FACTURACION",
+  "clienteId": 1
+}
+
+###
+PUT http://44.202.217.97:3000/direcciones/4
+Content-Type: application/json
+
+{
+  "domicilio": "Calle Verdadera 321",
+  "colonia": "Norte",
+  "municipio": "Ciudad Y",
+  "estado": "Estado Z",
+  "tipoDireccion": "ENVIO"
+}
+
+###
+DELETE http://44.202.217.97:3000/direcciones/4
+
+
+###
+GET http://44.202.217.97:3000/productos
+
+
+###
+GET http://44.202.217.97:3000/productos/1
+
+###
+POST http://44.202.217.97:3000/productos
+Content-Type: application/json
+
+{
+  "id": 1,
+  "nombre": "Producto 1",
+  "unidadMedida": "kg",
+  "precioBase": 10.50
+}
+
+###
+PUT http://44.202.217.97:3000/productos/1
+Content-Type: application/json
+
+{
+  "nombre": "Producto 1 Modificado",
+  "unidadMedida": "litros",
+  "precioBase": 15.75
+}
+
+
+###
+DELETE http://44.202.217.97:3000/productos/1
+
+
+###
+POST http://44.202.217.97:3000/notasVenta
+Content-Type: application/json
+
+{
+  "clienteId": 1,
+  "direccionFacturacionId": 1,
+  "direccionEnvioId": 1,
+  "productos": [
+    {
+      "productoId": 1,
+      "cantidad": 2,
+      "precioUnitario": 50.00
+    }
+  ]
+}
+
+
+
+
+
