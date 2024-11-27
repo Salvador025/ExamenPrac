@@ -23,61 +23,56 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-  docker:
+   docker:
     needs: build
     runs-on: ubuntu-latest
-    environment: TEST
     steps:
-      - name: Check out code
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Configure AWS credentials
+      - name: Log in to Amazon ECR
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
         run: |
-          aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
-          aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
-          aws configure set aws_session_token $AWS_SESSION_TOKEN
-          aws configure set default.region us-east-1
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{secrets.AWS_REGION}}.amazonaws.com
 
-      - name: Log in to Amazon ECR
-        run: |
-          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 082080151609.dkr.ecr.us-east-1.amazonaws.com/tutorial-ci-cd
 
-      - name: Build Docker image
+      - name: Build and tag Docker image
         run: |
-          docker build -t my-app:${{ github.sha }} .
-          docker tag my-app:${{ github.sha }} 082080151609.dkr.ecr.us-east-1.amazonaws.com/tutorial-ci-cd/${{ secrets.ECR_REPOSITORY_NAME }}:${{ github.sha }}
+          docker build -t app_Examen2 .
+          docker tag app_Examen2:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:${{ github.run_id }}
 
-      - name: Push to Amazon ECR
+      - name: Push Docker image to ECR
         run: |
-          docker push 082080151609.dkr.ecr.us-east-1.amazonaws.com/tutorial-ci-cd/${{ secrets.ECR_REPOSITORY_NAME }}:${{ github.sha }}
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:${{ github.run_id }}
 
   deploy:
     needs: docker
     runs-on: ubuntu-latest
-    environment: TEST
-    if: github.ref == 'refs/heads/main'
+    environment: test
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
     steps:
-      - name: SSH into EC2 and Deploy
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ec2-user
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            # Configurar credenciales de AWS
-            export AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
-            export AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            export AWS_SESSION_TOKEN=${{ secrets.AWS_SESSION_TOKEN }}
 
-            # Autenticación con ECR
-            aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 082080151609.dkr.ecr.us-east-1.amazonaws.com/tutorial-ci-cd
+      - name: Create SSH key
+        run: |
+          echo "${{ secrets.EC2_KEY }}" > /tmp/ssh_key.pem
+          chmod 600 /tmp/ssh_key.pem
 
-            # Descargar y correr el contenedor
-            docker pull 082080151609.dkr.ecr.us-east-1.amazonaws.com/tutorial-ci-cd/${{ secrets.ECR_REPOSITORY_NAME }}:${{ github.sha }}
-            docker stop my-app || true
-            docker rm my-app || true
-            docker run -d --name my-app -p 80:80 082080151609.dkr.ecr.us-east-1.amazonaws.com/tutorial-ci-cd/${{ secrets.ECR_REPOSITORY_NAME }}:${{ github.sha }}
+      - name: Deploy on EC2
+        run: |
+          ssh -o StrictHostKeyChecking=no -i /tmp/ssh_key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST_DEV }} << 'EOF'
+          
+            export AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} 
+            export AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} 
+            export AWS_SESSION_TOKEN=${{ secrets.AWS_SESSION_TOKEN }} 
+            $(aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com) 
+            docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:${{ github.run_id }} 
+            docker stop demo-twelve || true 
+            docker container rm -f demo-twelve || true 
+            docker run -d --name demo-twelve -p 8080:8080 ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:${{ github.run_id }}
+          EOF
